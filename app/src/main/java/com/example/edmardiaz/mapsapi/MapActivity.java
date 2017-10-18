@@ -3,6 +3,7 @@ package com.example.edmardiaz.mapsapi;
 import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -20,6 +21,9 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
@@ -36,20 +40,49 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         if (mLocationPermissionGranted) {
             getDeviceLocation();
-
+            mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(LatLng latLng) {
+                    if(limit > 0){
+                        limit--;
+                        addMarker(latLng);
+                    }else{
+                        return;
+                    }
+                }
+            });
             if (android.support.v4.app.ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED && android.support.v4.app.ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
                 return;
             }
             mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
+            //LatLng pointA = new LatLng(14.664172, 121.013000);
+            //LatLng pointB = new LatLng(14.664058, 121.013076);
+            //mMap.addMarker(new MarkerOptions().position(pointA)).setTitle("Point A");
+            //mMap.addMarker(new MarkerOptions().position(pointB)).setTitle("Point B");
+
+            //moveCamera(pointA, DEFAULT_ZOOM);
+
+        }
+    }
+    private int limit = 2;
+    private LatLng pointA;
+    private LatLng pointB;
+    private void addMarker(LatLng latLng){
+        if(limit == 1){
+            pointA = latLng;
+            mMap.addMarker(new MarkerOptions().position(pointA)).setTitle("Point A");
+        }else {
+            pointB = latLng;
+            mMap.addMarker(new MarkerOptions().position(pointB)).setTitle("Point B");
+            Polyline polyline1 = mMap.addPolyline(new PolylineOptions().geodesic(true).color(Color.RED)
+                    .add(pointA)
+                    .add(pointB)
+            );
+            polyline1.setVisible(true);
         }
     }
 
@@ -85,7 +118,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         if(task.isSuccessful()){
                             Log.d(TAG, "onComplete: found location");
                             Location currentLocation = (Location) task.getResult();
-
+                            // move to devices current location on map
                             moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM);
                         }else{
                             Log.d(TAG, "onComplete: current location is null");
