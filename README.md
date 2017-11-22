@@ -1,2 +1,0 @@
-# GoogleMapsAPI
-Android
